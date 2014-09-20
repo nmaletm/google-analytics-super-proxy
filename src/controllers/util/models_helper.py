@@ -177,24 +177,24 @@ def IsApiQueryAbandoned(api_query):
     A boolean indicating if the query is considered abandoned.
   """
   # Case 1: Use the last requested timestamp.
-  if api_query.last_request:
-    last_request_age = int(
-        (datetime.utcnow() - api_query.last_request).total_seconds())
-    max_timedelta = co.ABANDONED_INTERVAL_MULTIPLE * api_query.refresh_interval
-    return last_request_age > max_timedelta
+  # if api_query.last_request:
+  #   last_request_age = int(
+  #       (datetime.utcnow() - api_query.last_request).total_seconds())
+  #   max_timedelta = co.ABANDONED_INTERVAL_MULTIPLE * api_query.refresh_interval
+  #   return last_request_age > max_timedelta
 
-  # Case 2: Use the last modified timestamp.
-  elif api_query.modified:
-    last_modified_age = int(
-        (datetime.utcnow() - api_query.modified).total_seconds())
-    max_timedelta = co.ABANDONED_INTERVAL_MULTIPLE * api_query.refresh_interval
-    return last_modified_age > max_timedelta
+  # # Case 2: Use the last modified timestamp.
+  # elif api_query.modified:
+  #   last_modified_age = int(
+  #       (datetime.utcnow() - api_query.modified).total_seconds())
+  #   max_timedelta = co.ABANDONED_INTERVAL_MULTIPLE * api_query.refresh_interval
+  #   return last_modified_age > max_timedelta
 
-  # Case 3: Check if there is a saved API Query Response.
-  else:
-    api_query_response = api_query.api_query_responses.get()
-    if api_query_response:
-      return True
+  # # Case 3: Check if there is a saved API Query Response.
+  # else:
+  #   api_query_response = api_query.api_query_responses.get()
+  #   if api_query_response:
+  #     return True
 
   return False
 

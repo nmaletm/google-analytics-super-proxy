@@ -256,9 +256,10 @@ def ExecuteApiQueryTask(api_query):
         schedule_helper.ScheduleApiQuery(api_query)
         return True
 
-      # Save the query state just in case the user disabled it
+      # Save the query state if the user has disabled it
       # while it was in the task queue.
-      SaveApiQuery(api_query)
+      if api_query.is_active is False:
+        SaveApiQuery(api_query)
   return False
 
 
@@ -382,6 +383,7 @@ def GetPublicEndpointResponse(
   """
   transformed_response_content = None
   schedule_query = False
+  must_store_memcache = False
 
   if not requested_format or requested_format not in co.SUPPORTED_FORMATS:
     requested_format = co.DEFAULT_FORMAT
@@ -398,10 +400,10 @@ def GetPublicEndpointResponse(
     api_query = GetApiQuery(query_id)
 
     # 2. Check if this is an abandoned query
-    if (api_query is not None and api_query.is_active
-        and not api_query.is_error_limit_reached
-        and api_query.is_abandoned):
-      RefreshApiQueryResponse(api_query)
+ #   if (api_query is not None and api_query.is_active
+ #       and not api_query.is_error_limit_reached
+ #       and api_query.is_abandoned):
+ #     RefreshApiQueryResponse(api_query)
 
     # 3. Retrieve response from datastore
     response = GetApiQueryResponseFromDb(api_query)
@@ -411,11 +413,12 @@ def GetPublicEndpointResponse(
     # Flag to schedule query later on if there is a successful response.
     if api_query:
       schedule_query = not api_query.in_queue
+      must_store_memcache = True
 
   # 4. Return the formatted response.
   if response_status == 200:
-    UpdateApiQueryCounter(query_id)
-    UpdateApiQueryTimestamp(query_id)
+#    UpdateApiQueryCounter(query_id)
+#    UpdateApiQueryTimestamp(query_id)
 
     if co.ANONYMIZE_RESPONSES:
       response_content = transformers.RemoveKeys(response_content)
@@ -426,16 +429,16 @@ def GetPublicEndpointResponse(
       except (KeyError, TypeError, AttributeError):
         # If the transformation fails then return the original content.
         transformed_response_content = response_content
+    if must_store_memcache:
+      memcache_keys = {
+          'api_query': api_query,
+          co.DEFAULT_FORMAT: response_content,
+          requested_format: transformed_response_content
+      }
 
-    memcache_keys = {
-        'api_query': api_query,
-        co.DEFAULT_FORMAT: response_content,
-        requested_format: transformed_response_content
-    }
-
-    memcache.add_multi(memcache_keys,
-                       key_prefix=query_id,
-                       time=api_query.refresh_interval)
+      memcache.add_multi(memcache_keys,
+                         key_prefix=query_id,
+                         time=api_query.refresh_interval)
 
     # Attempt to schedule query if required.
     if schedule_query:
