@@ -1,3 +1,8 @@
+# Changes done at this fork
+This fork has some changes to avoid exceding the free quota at app engine.
+- Added an if at the [query_helper.py](https://github.com/nmaletm/google-analytics-super-proxy/blob/master/src/controllers/util/query_helper.py#L261) file, to reduce in 1 the write operation at each cron task to fetch the data of Google Analytics API.
+- Removed the feature of disabling queries in case are not used, to allow to make a lot of request to the superProxy to get the data.
+
 # Google Analytics superProxy
 
 The Google Analytics superProxy allows you to publicly share your Google
